@@ -1,14 +1,31 @@
 package useless.internal
 
-import useless.{ Process, Stage }
+//import java.util.UUID
+
+import useless._
 
 import scala.annotation.tailrec
 
 private[useless] sealed trait Runner[F[_], I, O] {
 
-  def apply(serviceContext: ServiceContext[F]): ManagedService[F, I, O] =
+  def apply(serviceContext: ServiceContext[F]): ManagedService[F, I, O] = {
+    println("test")
+    println(serviceContext)
     // TODO: build ManagedService from a runner
+    //
     ???
+  }
+
+//  def getStage(no: Int): Unit = {}
+//
+//  def runStage[M](serviceContext: ServiceContext[F], no: Int, execution: UUID): I => F[O] = {
+////    import serviceContext.journalist._
+//    implicit val me: MonadError[F, Throwable] = serviceContext.monadError
+//    this match {
+//      case Runner.RunStage(current, _) => ???
+//      case Runner.Stop() => me.pure[O]
+//    }
+//  }
 }
 
 private[useless] object Runner {
@@ -18,8 +35,8 @@ private[useless] object Runner {
 
   def fromProcess[F[_], I, O](process: Process[F, I, O]): Runner[F, I, O] = {
     @tailrec
-    def helper[M1](currentProcees: Process[F, I, M1], runner: Runner[F, M1, O]): Runner[F, I, O] =
-      currentProcees match {
+    def helper[M1](currentProcess: Process[F, I, M1], runner: Runner[F, M1, O]): Runner[F, I, O] =
+      currentProcess match {
         case _: Process.Init[F, I]           => runner
         case p: Process.Proceed[F, I, _, M1] => helper(p.current, Runner.RunStage(p.next, runner))
       }

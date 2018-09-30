@@ -6,40 +6,37 @@ import useless.Journalist._
 
 trait Journalist[F[_]] {
 
-  def persistStage[A: PersistentArgument](snapshot: StageSnapshot[A]): F[Unit] = persistRawStage(snapshot.raw)
+  def persistStatus[A: PersistentArgument](snapshot: ServiceState[A]): F[Unit] = persistRawStage(snapshot.raw)
 
-  def persistRawStage(snapshot:   RawStageSnapshot): F[Unit]
-  def fetchRawStages(serviceName: String, states: List[StageState]): F[List[RawStageSnapshot]]
+  def persistRawStage(snapshot:   RawServiceState): F[Unit]
+  def fetchRawStages(serviceName: String, states: List[StageStatus]): F[List[RawServiceState]]
 }
 
 object Journalist {
 
-  final case class StageSnapshot[A](serviceName: String,
-                                    execution:   UUID,
-                                    stageNo:     Int,
-                                    argument:    A,
-                                    state:       StageState) {
+  final case class ServiceState[A](serviceName: String, callID: UUID, stageNo: Int, argument: A, status: StageStatus) {
 
-    def raw(implicit pa: PersistentArgument[A]): RawStageSnapshot =
-      RawStageSnapshot(serviceName, execution, stageNo, PersistentArgument[A].encode(argument), state)
+    def raw(implicit pa: PersistentArgument[A]): RawServiceState =
+      RawServiceState(serviceName, callID, stageNo, PersistentArgument[A].encode(argument), status)
   }
-  final case class RawStageSnapshot(serviceName: String,
-                                    execution:   UUID,
-                                    stageNo:     Int,
-                                    argument:    String,
-                                    state:       StageState) {
+  final case class RawServiceState(serviceName: String,
+                                   callID:      UUID,
+                                   stageNo:     Int,
+                                   argument:    String,
+                                   status:      StageStatus) {
 
-    def as[A: PersistentArgument]: StageSnapshot[A] =
-      StageSnapshot[A](serviceName, execution, stageNo, PersistentArgument[A].decode(argument), state)
+    def as[A: PersistentArgument]: ServiceState[A] =
+      ServiceState[A](serviceName, callID, stageNo, PersistentArgument[A].decode(argument), status)
   }
 
-  sealed abstract class StageState(val name: String)
-  object StageState {
-    case object Started extends StageState("started")
-    case object Finished extends StageState("finished")
+  sealed abstract class StageStatus(val name: String)
+  object StageStatus {
+    case object Started extends StageStatus("started")
+    case object Finished extends StageStatus("finished")
+    case object Failed extends StageStatus("failed")
 
-    val values: Set[StageState] = Set(Started, Finished)
-    def findByName(name: String): StageState = values.find(_.name equalsIgnoreCase name).getOrElse(Started)
+    val values: Set[StageStatus] = Set(Started, Finished)
+    def findByName(name: String): StageStatus = values.find(_.name equalsIgnoreCase name).getOrElse(Failed)
   }
 
   // FOR TESTING ONLY!
@@ -51,19 +48,19 @@ object Journalist {
 
       import scala.collection.mutable
 
-      private val storage: mutable.Map[String, mutable.Map[UUID, RawStageSnapshot]] = mutable.Map.empty
+      private val storage: mutable.Map[String, mutable.Map[UUID, RawServiceState]] = mutable.Map.empty
 
-      def persistRawStage(snapshot: RawStageSnapshot): F[Unit] =
+      def persistRawStage(snapshot: RawServiceState): F[Unit] =
         map(pure(snapshot)) { s =>
           val snapshots = storage.getOrElseUpdate(s.serviceName, mutable.Map.empty)
-          snapshots.update(s.execution, s)
+          snapshots.update(s.callID, s)
         }
 
-      def fetchRawStages(serviceName: String, states: List[StageState]): F[List[RawStageSnapshot]] =
+      def fetchRawStages(serviceName: String, states: List[StageStatus]): F[List[RawServiceState]] =
         map(pure(serviceName -> states)) {
           case (n, s) =>
             storage.get(n).toList.flatMap { snapshots =>
-              snapshots.values.toList.filter(snapshot => s.contains(snapshot.state))
+              snapshots.values.toList.filter(snapshot => s.contains(snapshot.status))
             }
         }
     }

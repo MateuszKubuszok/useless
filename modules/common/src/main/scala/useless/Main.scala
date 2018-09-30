@@ -5,9 +5,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object Main {
 
+  import syntax._
+
   def main(args: Array[String]): Unit = {
 
-    def journalist: Journalist[Future] = Journalist.inMemory[Future]
+    val journalist: Journalist[Future] = Journalist.inMemory[Future]
     val manager = Manager[Future](journalist)
 
     val testService: Int => Future[String] = i => Future.successful(i.toString)
