@@ -1,3 +1,0 @@
-package useless
-
-object Common
