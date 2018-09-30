@@ -9,7 +9,6 @@ private[useless] sealed trait Runner[F[_], I, O] {
   def apply(serviceContext: ServiceContext[F]): ManagedService[F, I, O] =
     // TODO: build ManagedService from a runner
     ???
-
 }
 
 private[useless] object Runner {

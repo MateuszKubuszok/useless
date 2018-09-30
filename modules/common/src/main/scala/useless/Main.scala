@@ -7,9 +7,7 @@ object Main {
 
   def main(args: Array[String]): Unit = {
 
-    implicit def paInt: PersistentArgument[Int] = ???
-
-    def journalist: Journalist[Future] = ???
+    def journalist: Journalist[Future] = Journalist.inMemory[Future]
     val manager = Manager[Future](journalist)
 
     val testService: Int => Future[String] = i => Future.successful(i.toString)
