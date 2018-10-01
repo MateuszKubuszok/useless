@@ -2,23 +2,25 @@ package useless
 
 import java.util.UUID
 
-import useless.Journalist._
+import useless.Journal._
 
-trait Journalist[F[_]] {
+trait Journal[F[_]] {
 
-  def persistStatus[A: PersistentArgument](snapshot: ServiceState[A]): F[Unit] = persistRawStatus(snapshot.raw)
+  def persistStatus[A: PersistentArgument](state: ServiceState[A]): F[Unit] = persistRawStatus(state.raw)
 
-  def persistRawStatus(snapshot:  RawServiceState): F[Unit]
-  def fetchRawStages(serviceName: String, states: List[StageStatus]): F[List[RawServiceState]]
+  def persistRawStatus(state:     RawServiceState): F[Unit]
+  def fetchRawStates(serviceName: String): F[List[RawServiceState]]
+  def removeRawStates(callIDs:    List[UUID]): F[Unit]
 }
 
-object Journalist {
+object Journal {
 
   final case class ServiceState[A](serviceName: String, callID: UUID, stageNo: Int, argument: A, status: StageStatus) {
 
-    def updateArgument[B](newArg: B):           ServiceState[B] = ServiceState(serviceName, callID, stageNo, newArg, status)
-    def updateStageNo(f:          Int => Int):  ServiceState[A] = copy(stageNo = f(stageNo))
-    def updateStatus(newStatus:   StageStatus): ServiceState[A] = copy(status = newStatus)
+    def updateArgument[B](newArgument: B): ServiceState[B] =
+      ServiceState(serviceName, callID, stageNo, newArgument, status)
+    def updateStageNo(f:        Int => Int):  ServiceState[A] = copy(stageNo = f(stageNo))
+    def updateStatus(newStatus: StageStatus): ServiceState[A] = copy(status  = newStatus)
 
     def raw(implicit pa: PersistentArgument[A]): RawServiceState =
       RawServiceState(serviceName, callID, stageNo, PersistentArgument[A].encode(argument), status)
@@ -45,27 +47,29 @@ object Journalist {
 
   // FOR TESTING ONLY!
   @SuppressWarnings(Array("org.wartremover.warts.MutableDataStructures"))
-  private[useless] def inMemory[F[_]](implicit monadError: MonadError[F, Throwable]): Journalist[F] =
-    new Journalist[F] {
+  private[useless] def inMemory[F[_]](implicit monadError: MonadError[F, Throwable]): Journal[F] =
+    new Journal[F] {
 
       import monadError._
-
       import scala.collection.mutable
 
       private val storage: mutable.Map[String, mutable.Map[UUID, RawServiceState]] = mutable.Map.empty
 
-      def persistRawStatus(snapshot: RawServiceState): F[Unit] =
-        map(pure(snapshot)) { s =>
-          val snapshots = storage.getOrElseUpdate(s.serviceName, mutable.Map.empty)
-          snapshots.update(s.callID, s)
+      def persistRawStatus(state: RawServiceState): F[Unit] =
+        map(pure(state)) { s =>
+          storage.getOrElseUpdate(s.serviceName, mutable.Map.empty).update(s.callID, s)
         }
 
-      def fetchRawStages(serviceName: String, states: List[StageStatus]): F[List[RawServiceState]] =
-        map(pure(serviceName -> states)) {
-          case (n, s) =>
-            storage.get(n).toList.flatMap { snapshots =>
-              snapshots.values.toList.filter(snapshot => s.contains(snapshot.status))
-            }
+      def fetchRawStates(serviceName: String): F[List[RawServiceState]] =
+        map(pure(serviceName)) { n =>
+          storage.get(n).toList.flatMap(_.values.toList)
+        }
+
+      def removeRawStates(callIDs: List[UUID]): F[Unit] =
+        map(pure(callIDs)) { cs =>
+          storage.values.foreach { map =>
+            callIDs.foreach(map.remove)
+          }
         }
     }
 }

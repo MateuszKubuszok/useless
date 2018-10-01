@@ -2,9 +2,9 @@ package useless.internal
 
 import java.util.UUID
 
-import useless.Journalist.{ RawServiceState, ServiceState, StageStatus }
+import useless.Journal.{ RawServiceState, ServiceState, StageStatus }
 
-class ManagedService[F[_], I, O](run: Run[F, I, O])(implicit context: ServiceContext[F]) extends (I => F[O]) {
+class ManagedService[F[_], I, O](run: RunAST[F, I, O])(implicit context: ServiceContext[F]) extends (I => F[O]) {
 
   import context._
 
@@ -26,7 +26,7 @@ class ManagedService[F[_], I, O](run: Run[F, I, O])(implicit context: ServiceCon
   //   if failed check status and move up/down until it matches
   private def findAndRunStage[I1, M1](
     currentStageNo: Int,
-    currentRun:     Run[F, I1, O],
+    currentRun:     RunAST[F, I1, O],
     state:          Either[RawServiceState, ServiceState[I1]]
   ): F[O] = {
     def helper(): Either[RawServiceState, ServiceState[O]] = ???

@@ -1,6 +1,6 @@
 package useless
 
-import useless.Journalist._
+import useless.Journal._
 import useless.internal._
 import useless.syntax._
 
@@ -39,7 +39,7 @@ sealed abstract class Stage[F[_], I: PersistentArgument, O: PersistentArgument] 
 
   private def markStarted(state: ServiceState[I])(implicit context: ServiceContext[F]): F[Unit] = {
     val newState = state.updateStatus(StageStatus.Started)
-    context.journalist.persistStatus[I](newState)
+    context.journal.persistStatus[I](newState)
   }
 
   private def markFinished(state:  ServiceState[I],
@@ -47,13 +47,13 @@ sealed abstract class Stage[F[_], I: PersistentArgument, O: PersistentArgument] 
     import context.{ serviceName => _, _ }
     val newState = state.updateArgument(output).updateStatus(StageStatus.Finished)
     for {
-      _ <- journalist.persistStatus[O](newState)
+      _ <- journal.persistStatus[O](newState)
     } yield newState
   }
 
   private def markFailed(stageError: StageError)(implicit context: ServiceContext[F]): F[ServiceState[O]] = {
     import context._
-    journalist.persistRawStatus(stageError.recoveredState).flatMap { _ =>
+    journal.persistRawStatus(stageError.recoveredState).flatMap { _ =>
       monadError.raiseError[ServiceState[O]](stageError)
     }
   }

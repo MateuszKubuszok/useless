@@ -1,7 +1,7 @@
 package useless.internal
 
-import useless.{ Journalist, MonadError }
+import useless.{ Journal, MonadError }
 
 final case class ServiceContext[F[_]](serviceName:             String,
-                                      journalist:              Journalist[F],
+                                      journal:                 Journal[F],
                                       implicit val monadError: MonadError[F, Throwable])
