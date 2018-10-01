@@ -18,7 +18,7 @@ class Manager[F[_]](journal: Journal[F])(implicit monadError: MonadError[F, Thro
     service
   }
 
-  // TODO: retrieve
+  // TODO: retrieve unfinished and restore
 }
 
 object Manager {

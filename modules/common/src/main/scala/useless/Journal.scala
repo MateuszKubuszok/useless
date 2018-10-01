@@ -9,8 +9,8 @@ trait Journal[F[_]] {
   def persistStatus[A: PersistentArgument](state: ServiceState[A]): F[Unit] = persistRawStatus(state.raw)
 
   def persistRawStatus(state:     RawServiceState): F[Unit]
-  def fetchRawStates(serviceName: String): F[List[RawServiceState]]
-  def removeRawStates(callIDs:    List[UUID]): F[Unit]
+  def fetchRawStates(serviceName: String):          F[List[RawServiceState]]
+  def removeRawStates(callIDs:    List[UUID]):      F[Unit]
 }
 
 object Journal {
@@ -40,9 +40,11 @@ object Journal {
     case object Started extends StageStatus("started")
     case object Finished extends StageStatus("finished")
     case object Failed extends StageStatus("failed")
+    case object Reverting extends StageStatus("reverting")
+    case object IllegalState extends StageStatus("illegal-state")
 
-    val values: Set[StageStatus] = Set(Started, Finished)
-    def findByName(name: String): StageStatus = values.find(_.name equalsIgnoreCase name).getOrElse(Failed)
+    val values: Set[StageStatus] = Set(Started, Finished, Failed, Reverting, IllegalState)
+    def findByName(name: String): StageStatus = values.find(_.name equalsIgnoreCase name).getOrElse(IllegalState)
   }
 
   // FOR TESTING ONLY!
