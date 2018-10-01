@@ -28,7 +28,7 @@ private[useless] class Stage[F[_], I: PersistentArgument, O: PersistentArgument]
               StageError(state.updateArgument(reverted).updateStageNo(_ - 1).updateStatus(StageStatus.Reverting), error)
             )
           }
-        case None => monadError.raiseError(StageError.onIllegalState(state))
+        case None => monadError.raiseError(StageError.onMissingRevert(state))
       }
 
     }

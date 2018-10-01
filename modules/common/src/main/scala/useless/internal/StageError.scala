@@ -13,7 +13,7 @@ private[useless] object StageError {
   def apply[I: PersistentArgument](recovered: ServiceState[I], error: Throwable): StageError =
     StageError(recovered.raw, error)
 
-  def onIllegalState[I: PersistentArgument](state: ServiceState[I]): StageError =
+  def onMissingRevert[I: PersistentArgument](state: ServiceState[I]): StageError =
     StageError(state.updateStatus(StageStatus.IllegalState), NonRevertible)
 
   case object Restored extends Throwable("Stage restored from journal - the original exception is lost") {
@@ -21,8 +21,7 @@ private[useless] object StageError {
     override def fillInStackTrace: Throwable = this
   }
 
-  case object NonRevertible extends IllegalStateException("Called revert on non-revertible stage") {
+  case object BrokenService extends IllegalStateException("Service definition has a flaw that allowed invalid state")
 
-    override def fillInStackTrace: Throwable = this
-  }
+  case object NonRevertible extends IllegalStateException("Called revert on non-revertible stage")
 }

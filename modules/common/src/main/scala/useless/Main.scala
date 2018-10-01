@@ -1,7 +1,9 @@
 package useless
 
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.util.Try
 
 object Main {
 
@@ -17,6 +19,6 @@ object Main {
       ProcessBuilder.create[Future, Int].retryUntilSucceed(forward)(backward)
     }
 
-    managedService(1).foreach(println)
+    Await.result(managedService(1).transform(t => Try(println(t))), Duration.Inf)
   }
 }
