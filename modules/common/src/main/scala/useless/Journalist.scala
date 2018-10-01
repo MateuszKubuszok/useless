@@ -6,9 +6,9 @@ import useless.Journalist._
 
 trait Journalist[F[_]] {
 
-  def persistStatus[A: PersistentArgument](snapshot: ServiceState[A]): F[Unit] = persistRawStage(snapshot.raw)
+  def persistStatus[A: PersistentArgument](snapshot: ServiceState[A]): F[Unit] = persistRawStatus(snapshot.raw)
 
-  def persistRawStage(snapshot:   RawServiceState): F[Unit]
+  def persistRawStatus(snapshot:  RawServiceState): F[Unit]
   def fetchRawStages(serviceName: String, states: List[StageStatus]): F[List[RawServiceState]]
 }
 
@@ -50,7 +50,7 @@ object Journalist {
 
       private val storage: mutable.Map[String, mutable.Map[UUID, RawServiceState]] = mutable.Map.empty
 
-      def persistRawStage(snapshot: RawServiceState): F[Unit] =
+      def persistRawStatus(snapshot: RawServiceState): F[Unit] =
         map(pure(snapshot)) { s =>
           val snapshots = storage.getOrElseUpdate(s.serviceName, mutable.Map.empty)
           snapshots.update(s.callID, s)
