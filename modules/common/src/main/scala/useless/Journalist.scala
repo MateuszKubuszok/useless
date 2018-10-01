@@ -16,6 +16,10 @@ object Journalist {
 
   final case class ServiceState[A](serviceName: String, callID: UUID, stageNo: Int, argument: A, status: StageStatus) {
 
+    def updateArgument[B](newArg: B):           ServiceState[B] = ServiceState(serviceName, callID, stageNo, newArg, status)
+    def updateStageNo(f:          Int => Int):  ServiceState[A] = copy(stageNo = f(stageNo))
+    def updateStatus(newStatus:   StageStatus): ServiceState[A] = copy(status = newStatus)
+
     def raw(implicit pa: PersistentArgument[A]): RawServiceState =
       RawServiceState(serviceName, callID, stageNo, PersistentArgument[A].encode(argument), status)
   }

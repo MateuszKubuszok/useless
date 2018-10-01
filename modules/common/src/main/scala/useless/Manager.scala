@@ -1,13 +1,13 @@
 package useless
 
-import useless.internal.{ Runner, ServiceContext }
+import useless.internal.{ Run, ServiceContext }
 
 class Manager[F[_]](journalist: Journalist[F])(implicit monadError: MonadError[F, Throwable]) {
 
   // TODO: on each service creation run unfinished services in journal
 
   def apply[A, B](serviceName: String)(process: Process[F, A, B]): A => F[B] =
-    Runner.fromProcess(process)(ServiceContext(serviceName, journalist, monadError))
+    Run.fromProcess(process)(ServiceContext(serviceName, journalist, monadError))
 }
 
 object Manager {

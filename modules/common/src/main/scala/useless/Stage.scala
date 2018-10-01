@@ -8,7 +8,7 @@ sealed abstract class Stage[F[_], I: PersistentArgument, O: PersistentArgument] 
 
   // stage-type specific
 
-  val f: I => F[O]
+  private[useless] val f: I => F[O]
   private[useless] def recoverStrategy(originalState: ServiceState[I], error: Throwable)(
     implicit context:                                 ServiceContext[F]
   ): F[StageError]
@@ -38,15 +38,14 @@ sealed abstract class Stage[F[_], I: PersistentArgument, O: PersistentArgument] 
   // service state journaling
 
   private def markStarted(state: ServiceState[I])(implicit context: ServiceContext[F]): F[Unit] = {
-    val newState = state.copy(status = StageStatus.Started)
+    val newState = state.updateStatus(StageStatus.Started)
     context.journalist.persistStatus[I](newState)
   }
 
   private def markFinished(state:  ServiceState[I],
                            output: O)(implicit context: ServiceContext[F]): F[ServiceState[O]] = {
     import context.{ serviceName => _, _ }
-    import state._
-    val newState = ServiceState[O](serviceName, callID, stageNo, output, StageStatus.Finished)
+    val newState = state.updateArgument(output).updateStatus(StageStatus.Finished)
     for {
       _ <- journalist.persistStatus[O](newState)
     } yield newState
@@ -69,9 +68,7 @@ object Stage {
     def recoverStrategy(originalState: ServiceState[I],
                         error:         Throwable)(implicit context: ServiceContext[F]): F[StageError] = {
       import context._
-      monadError.pure(
-        StageError(originalState.copy(stageNo = originalState.stageNo - 1, status = StageStatus.Finished), error)
-      )
+      monadError.pure(StageError(originalState.updateStageNo(_ - 1).updateStatus(StageStatus.Finished), error))
     }
   }
 }
