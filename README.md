@@ -109,10 +109,9 @@ val manager: Manager[Future] = Manager[Future](journal)
 ```
 
 Both of these require an instance of `useless.algebra.MonadError[F, Throwable]`.
-Currently, only an instance for `Future` is defined, but eventually there are
-going to be integrations with cats and scalaz, which would lift their instances
-to useless' ones. (I didn't use any of them here to make sure useless has
-literally no dependencies).
+Currently, only an instance for `Future` is defined, but there are extra modules
+for lifting Cats/Scalaz instances for it (see below). (I didn't use any of them
+here to make sure `useless-core` has literally no dependencies).
 
 Then, for all services, that should be transactional you have to register them
 using `manager`:
@@ -138,3 +137,41 @@ application, that would call this all at the same time.
 
 (Have I mentioned that, this aims to be simple? And that people call it useless
 for a reason?)
+
+## Integrations
+
+### Cats
+
+Add `useless-cats` to project and import:
+
+```scala
+import cats.implicits._
+import useless.cats._
+```
+
+It will allow you to convert `cats.MonadError` and `cats.Traverse` to
+`useless.algebra.MonadError` and `useless.algebra.Sequence`.
+
+### Scalaz
+
+Add `useless-scalaz` to project and import:
+
+```scala
+import scalaz._
+import Scalaz._
+import useless.scalaz._
+```
+
+It will allow you to convert `scalaz.MonadError` and `scalaz.Traverse` to
+`useless.algebra.MonadError` and `useless.algebra.Sequence`.
+
+### Circe
+
+Add `useless-circe` to project and import:
+
+```scala
+import useless.circe._
+```
+
+It will allow you to convert `io.circe.Decoder` and `io.circe.Encoder` to
+`useless.PersistentArgument`.
