@@ -12,7 +12,7 @@ class InMemoryJournal[F[_]: MonadThrowable] extends Journal[F] {
 
   private val storage: mutable.Map[String, mutable.Map[UUID, RawServiceState]] = mutable.Map.empty
 
-  def persistRawStatus(state: RawServiceState): F[Unit] =
+  def persistRawState(state: RawServiceState): F[Unit] =
     state.pure[F].map { s =>
       storage.getOrElseUpdate(s.serviceName, mutable.Map.empty).update(s.callID, s)
     }

@@ -9,4 +9,6 @@ class MonadErrorOps[F[_], A](val fa: F[A]) extends AnyVal {
 
   def recoverWith[E](f: PartialFunction[E, F[A]])(implicit monadError: MonadError[F, E]): F[A] =
     monadError.recoverWith(fa)(f)
+
+  def toAttempt[E](implicit monadError: MonadError[F, E]): F[Either[E, A]] = monadError.toAttempt(fa)
 }

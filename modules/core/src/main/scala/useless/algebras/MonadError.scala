@@ -11,6 +11,8 @@ trait MonadError[F[_], E] extends Monad[F] {
   }
 
   def recoverWith[A](fa: F[A])(f: PartialFunction[E, F[A]]): F[A]
+
+  def toAttempt[A](fa: F[A]): F[Either[E, A]] = recover(map[A, Either[E, A]](fa)(Right(_))) { case e => Left(e) }
 }
 
 object MonadError {

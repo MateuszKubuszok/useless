@@ -6,9 +6,9 @@ import useless.Journal._
 
 trait Journal[F[_]] {
 
-  def persistStatus[A: PersistentArgument](state: ServiceState[A]): F[Unit] = persistRawStatus(state.raw)
+  def persistState[A: PersistentArgument](state: ServiceState[A]): F[Unit] = persistRawState(state.raw)
 
-  def persistRawStatus(state:     RawServiceState): F[Unit]
+  def persistRawState(state:      RawServiceState): F[Unit]
   def fetchRawStates(serviceName: String):          F[List[RawServiceState]]
   def removeRawStates(callIDs:    List[UUID]):      F[Unit]
 }
