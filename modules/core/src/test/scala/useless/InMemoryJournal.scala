@@ -3,27 +3,27 @@ package useless
 import java.util.UUID
 
 import useless.Journal.RawServiceState
-import useless.algebras.{ MonadError, MonadThrowable }
+import useless.algebras.MonadThrowable
+import useless.algebras.syntax._
 
-class InMemoryJournal[F[_]](implicit monadError: MonadError[F, Throwable]) extends Journal[F] {
+class InMemoryJournal[F[_]: MonadThrowable] extends Journal[F] {
 
-  import monadError._
   import scala.collection.mutable
 
   private val storage: mutable.Map[String, mutable.Map[UUID, RawServiceState]] = mutable.Map.empty
 
   def persistRawStatus(state: RawServiceState): F[Unit] =
-    map(pure(state)) { s =>
+    state.pure[F].map { s =>
       storage.getOrElseUpdate(s.serviceName, mutable.Map.empty).update(s.callID, s)
     }
 
   def fetchRawStates(serviceName: String): F[List[RawServiceState]] =
-    map(pure(serviceName)) { n =>
+    serviceName.pure[F].map { n =>
       storage.get(n).toList.flatMap(_.values.toList)
     }
 
   def removeRawStates(callIDs: List[UUID]): F[Unit] =
-    map(pure(callIDs)) { cs =>
+    callIDs.pure[F].map { cs =>
       storage.values.foreach { map =>
         cs.foreach(map.remove)
       }

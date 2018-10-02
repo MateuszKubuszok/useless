@@ -40,11 +40,12 @@ private[useless] class Stage[F[_], I: PersistentArgument, O: PersistentArgument]
     import context._
     rawState.status match {
       case StageStatus.Started  => runStage(rawState.as[I])
-      case StageStatus.Finished => monadError.pure(rawState.as[O])
+      case StageStatus.Finished => rawState.as[O].pure[F]
       case StageStatus.Failed =>
         recoveryStrategy[F, I, O](rawState.as[I], StageError.Restored).flatMap(journalFailure(_))
-      case StageStatus.Reverting    => runRevert(rawState.as[O], StageError.Restored)
-      case StageStatus.IllegalState => monadError.raiseError(new IllegalStateException("Service is in illegal state"))
+      case StageStatus.Reverting => runRevert(rawState.as[O], StageError.Restored)
+      case StageStatus.IllegalState =>
+        (new IllegalStateException("Service is in illegal state"): Throwable).raiseError[F, ServiceState[O]]
     }
   }
 
