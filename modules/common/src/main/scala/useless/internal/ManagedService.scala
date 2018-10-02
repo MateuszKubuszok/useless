@@ -3,7 +3,7 @@ package useless.internal
 import java.util.UUID
 
 import useless.Journal.{ RawServiceState, ServiceState, StageStatus }
-import useless.syntax._
+import useless.algebras.syntax._
 
 class ManagedService[F[_], I, O](run: RunAST[F, I, O])(implicit context: ServiceContext[F]) extends (I => F[O]) {
 
@@ -16,17 +16,6 @@ class ManagedService[F[_], I, O](run: RunAST[F, I, O])(implicit context: Service
 
   private def initialState(input: I): ServiceState[I] =
     ServiceState(serviceName, UUID.randomUUID, 0, input, StageStatus.Finished)
-
-  // pseudocode
-  //
-  // you have either RawServiceState or ServiceState[I]
-  // if you have Left(raw)
-  //   if raw.stageNo != current stageNo, then call it recursively, increment stageNo and pass internal runner
-  //   else run restored
-  // if you have right, it should match stage id so just pass state and run it
-  // check result
-  //   if ok get nested runner and run it
-  //   if failed check status and move up/down until it matches
 
   // scalastyle:off
   @SuppressWarnings(Array("org.wartremover.warts.Equals", "org.wartremover.warts.Recursion"))
@@ -55,7 +44,7 @@ class ManagedService[F[_], I, O](run: RunAST[F, I, O])(implicit context: Service
       case (Right(state), RunAST.Stop()) =>
         journal.removeRawStates(List(state.callID)).map(_ => state.argument.asInstanceOf[O])
       case _ => monadError.raiseError[O](StageError.BrokenService)
-    }).recoverWith {
+    }).recoverWith[Throwable] {
       case StageError(rawState, _) if rawState.status != StageStatus.IllegalState && rawState.stageNo > 0 =>
         restore(rawState)
       case StageError(_, error) =>

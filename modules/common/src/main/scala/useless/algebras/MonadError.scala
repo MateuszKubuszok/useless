@@ -1,16 +1,8 @@
-package useless
+package useless.algebras
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-trait MonadError[F[_], E] {
-
-  def pure[A](value: A): F[A]
-
-  def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
-
-  def map[A, B](fa: F[A])(f: A => B): F[B] = flatMap(fa)(a => pure(f(a)))
-
-  def foreach[A, B](fa: F[A])(f: A => B): Unit = { map(fa)(f); () }
+trait MonadError[F[_], E] extends Monad[F] {
 
   def raiseError[A](error: E): F[A]
 

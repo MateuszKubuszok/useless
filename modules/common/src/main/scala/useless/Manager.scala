@@ -2,6 +2,7 @@ package useless
 
 import useless.internal.{ RunAST, ServiceContext }
 import useless.Journal.RawServiceState
+import useless.algebras.MonadError
 
 import scala.collection.mutable
 

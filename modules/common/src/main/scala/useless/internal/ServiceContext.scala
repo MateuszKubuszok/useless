@@ -1,6 +1,7 @@
 package useless.internal
 
-import useless.{ Journal, MonadError }
+import useless.Journal
+import useless.algebras.MonadError
 
 final case class ServiceContext[F[_]](serviceName:             String,
                                       journal:                 Journal[F],

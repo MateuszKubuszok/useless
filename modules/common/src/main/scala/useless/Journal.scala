@@ -3,6 +3,7 @@ package useless
 import java.util.UUID
 
 import useless.Journal._
+import useless.algebras.MonadError
 
 trait Journal[F[_]] {
 

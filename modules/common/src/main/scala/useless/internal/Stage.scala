@@ -1,8 +1,8 @@
 package useless.internal
 
 import useless.Journal._
-import useless.syntax._
 import useless.PersistentArgument
+import useless.algebras.syntax._
 
 private[useless] class Stage[F[_], I: PersistentArgument, O: PersistentArgument](run: I => F[O],
                                                                                  revertOpt:        Option[O => F[I]],
@@ -11,7 +11,7 @@ private[useless] class Stage[F[_], I: PersistentArgument, O: PersistentArgument]
   private[useless] def runStage(state: ServiceState[I])(implicit context: ServiceContext[F]): F[ServiceState[O]] = {
     import context._
     journalStart(state).flatMap { _ =>
-      run(state.argument).flatMap(journalFinish(state, _)).recoverWith {
+      run(state.argument).flatMap(journalFinish(state, _)).recoverWith[Throwable] {
         case error: Throwable => recoveryStrategy[F, I, O](state, error).flatMap(journalFailure(_))
       }
     }
