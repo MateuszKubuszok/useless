@@ -15,9 +15,9 @@ object Dependencies {
   val aspectjVersion = "1.9.1"
 
   // libraries versions
-  val catsVersion     = "1.2.0"
+  val catsVersion     = "1.3.1"
   val monixVersion    = "3.0.0-RC1"
-  val specs2Version   = "4.3.3"
+  val specs2Version   = "4.3.4"
 
   // resolvers
   val resolvers = Seq(
