@@ -23,21 +23,19 @@ class Manager[F[_]: MonadThrowable: Traverse](journal: Journal[F], logger: Strin
   }
 
   def retryServicesInDB(): F[List[RetryResult]] =
-    services.toList.foldLeft(List.empty[RetryResult].pure[F]) {
-      case (resultF, (serviceName, restore)) =>
-        val restoredF =
-          Monad[F].flatten[List[RetryResult]](
-            journal
-              .fetchRawStates(serviceName)
-              .map(_.map(restore(_).map(_.asInstanceOf[Any]).toAttempt[Throwable]))
-              .map(Traverse[F].sequence)
-          )
-
-        for {
-          result <- resultF
-          restored <- restoredF
-        } yield result ++ restored
-    }
+    Traverse[F]
+      .sequence(
+        services.toList.map {
+          case (serviceName, restore) =>
+            Monad[F].flatten[List[RetryResult]](
+              journal
+                .fetchRawStates(serviceName)
+                .map(_.map(restore(_).map(_.asInstanceOf[Any]).toAttempt[Throwable]))
+                .map(Traverse[F].sequence)
+            )
+        }
+      )
+      .map(_.flatten)
 }
 
 object Manager {

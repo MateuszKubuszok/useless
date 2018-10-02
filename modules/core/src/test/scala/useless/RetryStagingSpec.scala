@@ -6,7 +6,8 @@ import org.specs2.concurrent.ExecutionEnv
 import org.specs2.matcher.FutureMatchers
 import useless.Journal.StageStatus
 
-import scala.concurrent.Future
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration._
 
 class RetryStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec with FutureMatchers {
 
@@ -60,8 +61,14 @@ class RetryStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec wit
       val addSuffix:    String => Future[String] = failThenPass(err("second stage fail"))(s => s"$s test".pure[F])
       val removeSuffix: String => Future[String] = _.replaceFirst(" test", "").pure[F]
 
-      journal.persistState[Int](Journal.ServiceState[Int]("test", UUID.randomUUID, 1, 10, StageStatus.Started))
-      journal.persistState[Int](Journal.ServiceState[Int]("test", UUID.randomUUID, 1, 20, StageStatus.Finished))
+      Await.result(
+        journal.persistState[Int](Journal.ServiceState[Int]("test", UUID.randomUUID, 1, 10, StageStatus.Started)),
+        1.second
+      )
+      Await.result(
+        journal.persistState[Int](Journal.ServiceState[Int]("test", UUID.randomUUID, 1, 20, StageStatus.Finished)),
+        1.second
+      )
 
       val managedService = manager("test") {
         ProcessBuilder.create[Future, Int].retryUntilSucceed(i2fs)(s2fi).retryUntilSucceed(addSuffix)(removeSuffix)
