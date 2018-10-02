@@ -11,12 +11,10 @@ object Dependencies {
   // build tools version
   val scalaFmtVersion = "1.5.1"
 
-  // aspectj version
-  val aspectjVersion = "1.9.1"
-
   // libraries versions
   val catsVersion     = "1.3.1"
-  val monixVersion    = "3.0.0-RC1"
+  val circeVersion    = "0.10.0"
+  val scalazVersion   = "7.2.26"
   val specs2Version   = "4.3.4"
 
   // resolvers
@@ -27,9 +25,10 @@ object Dependencies {
 
   // functional libraries
   val cats               = "org.typelevel"                %% "cats-core"                 % catsVersion
-  // async
-  val monixExecution     = "io.monix"                     %% "monix-execution"           % monixVersion
-  val monixEval          = "io.monix"                     %% "monix-eval"                % monixVersion
+  val scalaz             = "org.scalaz"                   %% "scalaz-core"               % scalazVersion
+  // serialization
+  val circe              = "io.circe"                     %% "circe-core"                % circeVersion
+  val circeParser        = "io.circe"                     %% "circe-parser"              % circeVersion
   // testing
   val spec2Core          = "org.specs2"                   %% "specs2-core"               % specs2Version
   val spec2Scalacheck    = "org.specs2"                   %% "specs2-scalacheck"         % specs2Version
@@ -41,8 +40,6 @@ trait Dependencies {
   val scalaVersionUsed = scalaVersion
 
   val scalaFmtVersionUsed = scalaFmtVersion
-
-  val aspectjVersionUsed = aspectjVersion
 
   // resolvers
   val commonResolvers = resolvers

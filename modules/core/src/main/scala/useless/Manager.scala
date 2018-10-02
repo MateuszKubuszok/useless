@@ -8,7 +8,7 @@ import useless.Manager.RetryResult
 
 import scala.collection.mutable
 
-class Manager[F[_]: MonadThrowable: Traverse](journal: Journal[F], logger: String => Unit) {
+class Manager[F[_]: MonadThrowable: Sequence](journal: Journal[F], logger: String => Unit) {
 
   @SuppressWarnings(Array("org.wartremover.warts.MutableDataStructures"))
   private val services: mutable.Map[String, RawServiceState => F[_]] = mutable.Map.empty
@@ -23,7 +23,7 @@ class Manager[F[_]: MonadThrowable: Traverse](journal: Journal[F], logger: Strin
   }
 
   def resumeInterruptedServices(): F[List[RetryResult]] =
-    Traverse[F]
+    Sequence[F]
       .sequence(
         services.toList.map {
           case (serviceName, restore) =>
@@ -31,7 +31,7 @@ class Manager[F[_]: MonadThrowable: Traverse](journal: Journal[F], logger: Strin
               journal
                 .fetchRawStates(serviceName)
                 .map(_.map(restore(_).map(_.asInstanceOf[Any]).toAttempt[Throwable]))
-                .map(Traverse[F].sequence)
+                .map(Sequence[F].sequence)
             )
         }
       )
@@ -42,9 +42,9 @@ object Manager {
 
   type RetryResult = Either[Throwable, Any]
 
-  def apply[F[_]: MonadThrowable: Traverse](journal: Journal[F]): Manager[F] =
+  def apply[F[_]: MonadThrowable: Sequence](journal: Journal[F]): Manager[F] =
     new Manager[F](journal, _ => ())
 
-  def apply[F[_]: MonadThrowable: Traverse](journal: Journal[F], logger: String => Unit): Manager[F] =
+  def apply[F[_]: MonadThrowable: Sequence](journal: Journal[F], logger: String => Unit): Manager[F] =
     new Manager[F](journal, logger)
 }
