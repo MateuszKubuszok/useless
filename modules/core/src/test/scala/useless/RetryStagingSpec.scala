@@ -51,7 +51,7 @@ class RetryStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec wit
       result must be_==("10 test").await
     }
 
-    "retry after JVM crash" in new WithManager[F] {
+    "resume after JVM crash" in new WithManager[F] {
       // given
       val i2fs: Int => F[String] = failThenPass(err("first stage fail"))(_.toString.pure[F])
       val s2fi: String => F[Int] = _.toInt.pure[F]
@@ -67,7 +67,7 @@ class RetryStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec wit
       }
 
       // when
-      val result = manager.retryServicesInDB().map(_.toSet)
+      val result = manager.resumeInterruptedServices().map(_.toSet)
 
       // then
       result must be_==(Set(Right("10 test"), Right("20 test"))).await

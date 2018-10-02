@@ -22,7 +22,7 @@ class Manager[F[_]: MonadThrowable: Traverse](journal: Journal[F], logger: Strin
     service
   }
 
-  def retryServicesInDB(): F[List[RetryResult]] =
+  def resumeInterruptedServices(): F[List[RetryResult]] =
     Traverse[F]
       .sequence(
         services.toList.map {

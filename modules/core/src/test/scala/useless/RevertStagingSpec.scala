@@ -32,7 +32,7 @@ class RevertStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec wi
       result must be_==("10 test").await
     }
 
-    "retry after failure" in new WithManager[F] {
+    "revert after failure" in new WithManager[F] {
       // given
       var firstReverted = false
       val i2fs: Int => F[String] = _.toString.pure[F]
@@ -61,7 +61,7 @@ class RevertStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec wi
       secondReverted must beTrue
     }
 
-    "retry after JVM crash" in new WithManager[F] {
+    "resume after JVM crash" in new WithManager[F] {
       // given
       val i2fs: Int => F[String] = _.toString.pure[F]
       val s2fi: String => F[Int] = _.toInt.pure[F]
@@ -77,7 +77,7 @@ class RevertStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec wi
       }
 
       // when
-      val result = manager.retryServicesInDB().map(_.toSet)
+      val result = manager.resumeInterruptedServices().map(_.toSet)
 
       // then
       result must be_==(Set(Right("10 test"), Right("20 test"))).await
