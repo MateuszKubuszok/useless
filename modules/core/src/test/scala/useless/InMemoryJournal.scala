@@ -25,7 +25,7 @@ class InMemoryJournal[F[_]](implicit monadError: MonadError[F, Throwable]) exten
   def removeRawStates(callIDs: List[UUID]): F[Unit] =
     map(pure(callIDs)) { cs =>
       storage.values.foreach { map =>
-        callIDs.foreach(map.remove)
+        cs.foreach(map.remove)
       }
     }
 }

@@ -3,7 +3,6 @@ package useless
 import java.util.UUID
 
 import useless.Journal._
-import useless.algebras.MonadError
 
 trait Journal[F[_]] {
 
@@ -47,32 +46,4 @@ object Journal {
     val values: Set[StageStatus] = Set(Started, Finished, Failed, Reverting, IllegalState)
     def findByName(name: String): StageStatus = values.find(_.name equalsIgnoreCase name).getOrElse(IllegalState)
   }
-
-  // FOR TESTING ONLY!
-  @SuppressWarnings(Array("org.wartremover.warts.MutableDataStructures"))
-  private[useless] def inMemory[F[_]](implicit monadError: MonadError[F, Throwable]): Journal[F] =
-    new Journal[F] {
-
-      import monadError._
-      import scala.collection.mutable
-
-      private val storage: mutable.Map[String, mutable.Map[UUID, RawServiceState]] = mutable.Map.empty
-
-      def persistRawStatus(state: RawServiceState): F[Unit] =
-        map(pure(state)) { s =>
-          storage.getOrElseUpdate(s.serviceName, mutable.Map.empty).update(s.callID, s)
-        }
-
-      def fetchRawStates(serviceName: String): F[List[RawServiceState]] =
-        map(pure(serviceName)) { n =>
-          storage.get(n).toList.flatMap(_.values.toList)
-        }
-
-      def removeRawStates(callIDs: List[UUID]): F[Unit] =
-        map(pure(callIDs)) { cs =>
-          storage.values.foreach { map =>
-            callIDs.foreach(map.remove)
-          }
-        }
-    }
 }
