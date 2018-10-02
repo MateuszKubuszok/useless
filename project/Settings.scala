@@ -47,6 +47,7 @@ object Settings extends Dependencies {
       "-Ypartial-unification",
       // "-Ysysdef", "com.kubuszok.Predef._", // Typelevel Scala only
       // "-Ypredef", "_", // Typelevel Scala only
+      "-Ybackend-parallelism", "8",
       // warnings
       "-Ywarn-dead-code",
       "-Ywarn-extra-implicit",
