@@ -3,7 +3,7 @@ package useless
 import java.util.UUID
 
 import useless.Journal.RawServiceState
-import useless.algebras.MonadError
+import useless.algebras.{ MonadError, MonadThrowable }
 
 class InMemoryJournal[F[_]](implicit monadError: MonadError[F, Throwable]) extends Journal[F] {
 
@@ -28,4 +28,9 @@ class InMemoryJournal[F[_]](implicit monadError: MonadError[F, Throwable]) exten
         cs.foreach(map.remove)
       }
     }
+}
+
+object InMemoryJournal {
+
+  def apply[F[_]: MonadThrowable]: InMemoryJournal[F] = new InMemoryJournal[F]
 }

@@ -5,4 +5,5 @@ import useless.algebras.MonadError
 
 final case class ServiceContext[F[_]](serviceName:             String,
                                       journal:                 Journal[F],
+                                      logger:                  String => Unit,
                                       implicit val monadError: MonadError[F, Throwable])

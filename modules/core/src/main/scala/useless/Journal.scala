@@ -24,6 +24,9 @@ object Journal {
 
     def raw(implicit pa: PersistentArgument[A]): RawServiceState =
       RawServiceState(serviceName, callID, stageNo, PersistentArgument[A].encode(argument), status)
+
+    override def toString: String =
+      s"""(serviceName: $serviceName, callID: $callID, stageNo: $stageNo, status: $status)"""
   }
   final case class RawServiceState(serviceName: String,
                                    callID:      UUID,
@@ -33,9 +36,12 @@ object Journal {
 
     def as[A: PersistentArgument]: ServiceState[A] =
       ServiceState[A](serviceName, callID, stageNo, PersistentArgument[A].decode(argument), status)
+
+    override def toString: String =
+      s"""(serviceName: $serviceName, callID: $callID, stageNo: $stageNo, status: $status)"""
   }
 
-  sealed abstract class StageStatus(val name: String)
+  sealed abstract class StageStatus(val name: String) { override def toString: String = name }
   object StageStatus {
     case object Started extends StageStatus("started")
     case object Finished extends StageStatus("finished")
