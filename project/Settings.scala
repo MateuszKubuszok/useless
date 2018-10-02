@@ -2,8 +2,6 @@ import sbt._
 import sbt.Keys._
 import sbt.TestFrameworks.Specs2
 import sbt.Tests.Argument
-import com.lightbend.sbt.SbtAspectj._
-import com.lightbend.sbt.SbtAspectj.autoImport._
 import com.typesafe.sbt._
 import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 import org.scalastyle.sbt.ScalastylePlugin.autoImport._
@@ -131,31 +129,6 @@ object Settings extends Dependencies {
       Wart.Nothing
     )
   )
-
-  implicit class RunConfigurator(project: Project) {
-
-    def configureRun(main: String): Project = project
-      .settings(inTask(assembly)(Seq(
-        assemblyJarName := s"${name.value}.jar",
-        assemblyMergeStrategy := {
-          case PathList("scala", _*)                       => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("compiler.properties")             => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("interactive.properties")          => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("library.properties")              => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("reflect.properties")              => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("repl.properties")                 => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("repl-jline.properties")           => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("scala-buildcharacter.properties") => MergeStrategy.first // workaround for Typelevel Scala
-          case PathList("scaladoc.properties")             => MergeStrategy.first // workaround for Typelevel Scala
-          case strategy                                    => MergeStrategy.defaultMergeStrategy(strategy)
-        },
-        mainClass := Some(main)
-      )))
-      .settings(Compile / run / mainClass := Some(main))
-      .settings(aspectjSettings)
-      .settings(Aspectj / aspectjVersion := aspectjVersionUsed)
-      .settings(reStart / javaOptions ++= (Aspectj / aspectjWeaverOptions).value)
-  }
 
   abstract class TestConfigurator(project: Project, config: Configuration) {
 
