@@ -3,6 +3,7 @@ package useless
 import java.util.UUID
 
 import useless.Journal._
+import useless.internal.StageError
 
 trait Journal[F[_]] {
 
@@ -15,15 +16,26 @@ trait Journal[F[_]] {
 
 object Journal {
 
-  final case class ServiceState[A](serviceName: String, callID: UUID, stageNo: Int, argument: A, status: StageStatus) {
+  final case class ServiceState[A](serviceName: String,
+                                   callID:      UUID,
+                                   stageNo:     Int,
+                                   argument:    A,
+                                   status:      StageStatus,
+                                   error:       Option[Throwable] = None) {
 
     def updateArgument[B](newArgument: B): ServiceState[B] =
-      ServiceState(serviceName, callID, stageNo, newArgument, status)
+      ServiceState(serviceName, callID, stageNo, newArgument, status, error)
     def updateStageNo(f:        Int => Int):  ServiceState[A] = copy(stageNo = f(stageNo))
     def updateStatus(newStatus: StageStatus): ServiceState[A] = copy(status  = newStatus)
 
+    def withError(error: Throwable): ServiceState[A] = copy(error = Some(error))
+    def cleanError: ServiceState[A] = copy(error = None)
+
     def raw(implicit pa: PersistentArgument[A]): RawServiceState =
       RawServiceState(serviceName, callID, stageNo, PersistentArgument[A].encode(argument), status)
+
+    def toStageError(implicit pa: PersistentArgument[A]): StageError =
+      StageError(this, error.getOrElse(StageError.LostError))
 
     override def toString: String =
       s"""(serviceName: $serviceName, callID: $callID, stageNo: $stageNo, status: $status)"""
