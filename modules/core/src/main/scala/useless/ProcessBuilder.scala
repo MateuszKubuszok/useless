@@ -1,13 +1,14 @@
 package useless
 
 import useless.internal.{ RecoveryStrategy, Stage }
+import useless.ProcessBuilder.CustomStrategy
 
 sealed trait ProcessBuilder[F[_], I, O] {
 
-  def retryUntilSucceed[O2](
+  def retryUntilSucceedNonRevertible[O2](
     run:         O => F[O2]
   )(implicit po: PersistentArgument[O], po2: PersistentArgument[O2]): ProcessBuilder[F, I, O2] =
-    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, RecoveryStrategy.retryUntilSucceed))
+    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, RecoveryStrategy.Retry))
 }
 
 sealed trait ReversibleProcessBuilder[F[_], I, O] extends ProcessBuilder[F, I, O] {
@@ -17,7 +18,35 @@ sealed trait ReversibleProcessBuilder[F[_], I, O] extends ProcessBuilder[F, I, O
   )(
     revert:      O2 => F[O]
   )(implicit po: PersistentArgument[O], po2: PersistentArgument[O2]): ReversibleProcessBuilder[F, I, O2] =
-    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, revert, RecoveryStrategy.retryUntilSucceed))
+    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, revert, RecoveryStrategy.Retry))
+
+  def revertOnFirstFailure[O2](
+    run: O => F[O2]
+  )(
+    revert:      O2 => F[O]
+  )(implicit po: PersistentArgument[O], po2: PersistentArgument[O2]): ReversibleProcessBuilder[F, I, O2] =
+    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, revert, RecoveryStrategy.Revert))
+
+  def revertOnFirstFailureNonRevertible[O2](
+    run:         O => F[O2]
+  )(implicit po: PersistentArgument[O], po2: PersistentArgument[O2]): ProcessBuilder[F, I, O2] =
+    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, RecoveryStrategy.Revert))
+
+  def customHandler[O2](
+    run: O => F[O2]
+  )(
+    revert: O2 => F[O]
+  )(
+    customStrategy: CustomStrategy
+  )(implicit po:    PersistentArgument[O], po2: PersistentArgument[O2]): ReversibleProcessBuilder[F, I, O2] =
+    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, revert, RecoveryStrategy.Custom(customStrategy)))
+
+  def customHandlerNonRevertible[O2](
+    run: O => F[O2]
+  )(
+    customStrategy: CustomStrategy
+  )(implicit po:    PersistentArgument[O], po2: PersistentArgument[O2]): ReversibleProcessBuilder[F, I, O2] =
+    ProcessBuilder.Proceed[F, I, O, O2](this, Stage(run, RecoveryStrategy.Custom(customStrategy)))
 }
 
 object ProcessBuilder {
@@ -27,4 +56,15 @@ object ProcessBuilder {
   private[useless] final case class Init[F[_], A]() extends ReversibleProcessBuilder[F, A, A]
   private[useless] final case class Proceed[F[_], I, M, O](current: ProcessBuilder[F, I, M], next: Stage[F, M, O])
       extends ReversibleProcessBuilder[F, I, O]
+
+  sealed trait OnError
+  object OnError {
+    case object Retry extends OnError
+    case object Revert extends OnError
+  }
+
+  trait CustomStrategy {
+
+    def apply[I: PersistentArgument](argument: I): OnError
+  }
 }

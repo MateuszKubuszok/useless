@@ -12,38 +12,42 @@ private[useless] class Stage[F[_], I: PersistentArgument, O: PersistentArgument]
     import context._
     journalStart(state).flatMap { _ =>
       run(state.argument).flatMap(journalFinish(state, _)).recoverWith[Throwable] {
-        case error: Throwable => recoveryStrategy[F, I, O](state, error).flatMap(journalFailure(_))
+        case error: Throwable => recoveryStrategy[F, I, O](state.withError(error)).flatMap(journalFailure(_))
       }
     }
   }
 
-  private[useless] def runRevert(state: ServiceState[O],
-                                 error: Throwable)(implicit context: ServiceContext[F]): F[ServiceState[O]] = {
+  private[useless] def runRevert(stageError: StageError)(implicit context: ServiceContext[F]): F[ServiceState[O]] =
+    runRevert(stageError.toServiceState[O])
+  private[useless] def runRevert(state: ServiceState[O])(implicit context: ServiceContext[F]): F[ServiceState[O]] = {
     import context._
     journalRevert(state).flatMap { _ =>
       revertOpt match {
         case Some(revert) =>
           revert(state.argument).flatMap { reverted =>
-            monadError.raiseError(
-              StageError(state.updateArgument(reverted).updateStageNo(_ - 1).updateStatus(StageStatus.Reverting), error)
-            )
+            (state
+              .updateArgument(reverted)
+              .updateStageNo(_ - 1)
+              .updateStatus(StageStatus.Reverting)
+              .toStageError: Throwable).raiseError[F, ServiceState[O]]
           }
-        case None => monadError.raiseError(StageError.onMissingRevert(state))
+        case None => (StageError.onMissingRevert(state): Throwable).raiseError[F, ServiceState[O]]
       }
-
     }
   }
 
   private[useless] def restoreStage(
-    rawState:         RawServiceState
+    rawState:         RawServiceState,
+    error:            Option[Throwable]
   )(implicit context: ServiceContext[F]): F[ServiceState[O]] = {
     import context._
     rawState.status match {
-      case StageStatus.Started  => runStage(rawState.as[I])
+      case StageStatus.Started  => runStage(rawState.as[I].copy(error = error))
       case StageStatus.Finished => rawState.as[O].pure[F]
       case StageStatus.Failed =>
-        recoveryStrategy[F, I, O](rawState.as[I], StageError.Restored).flatMap(journalFailure(_))
-      case StageStatus.Reverting => runRevert(rawState.as[O], StageError.Restored)
+        recoveryStrategy[F, I, O](rawState.as[I].withError(error.getOrElse(StageError.LostError)))
+          .flatMap(journalFailure(_))
+      case StageStatus.Reverting => runRevert(rawState.as[O].copy(error = error))
       case StageStatus.IllegalState =>
         (new IllegalStateException("Service is in illegal state"): Throwable).raiseError[F, ServiceState[O]]
     }
@@ -72,6 +76,8 @@ private[useless] class Stage[F[_], I: PersistentArgument, O: PersistentArgument]
 
   private def journalRevert(state: ServiceState[O])(implicit context: ServiceContext[F]): F[Unit] =
     context.journal.persistState[O](state.updateStatus(StageStatus.Reverting))
+
+  override def toString: String = s"Stage(revertable = ${revertOpt.isDefined}, recoveryStrategy = $recoveryStrategy)"
 }
 
 private[useless] object Stage {
