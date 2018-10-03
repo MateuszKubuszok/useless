@@ -13,7 +13,7 @@ class BoundedRetryOps[F[_], I, O](val rbp: ReversibleProcessBuilder[F, I, O]) ex
   )(
     implicit monad: Monad[F],
     po:             PersistentArgument[O],
-    po2:            PersistentArgument[O2],
+    po2:            PersistentArgument[O2]
   ): ReversibleProcessBuilder[F, I, O2] =
     BoundedRetry.build(rbp, run, revert, maxAttempts, initialDelay, delayIncreaseFactor)
 }
