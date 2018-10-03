@@ -67,7 +67,7 @@ class RetryStagingSpec(implicit ee: ExecutionEnv) extends ProcessManagerSpec wit
       }
 
       // when
-      val result = manager.resumeInterruptedServices().map(_.toSet)
+      val result = manager.resumeInterruptedServicesUnsafe().map(_.toSet)
 
       // then
       result must be_==(Set(Right("10 test"), Right("20 test"))).await

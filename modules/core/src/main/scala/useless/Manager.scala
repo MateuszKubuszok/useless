@@ -22,7 +22,22 @@ class Manager[F[_]: MonadThrowable: Sequence](journal: Journal[F], logger: Strin
     service
   }
 
-  def resumeInterruptedServices(): F[List[RetryResult]] =
+  def resumeInterruptedServices(): F[Unit] =
+    Sequence[F]
+      .sequence(
+        services.toList.map {
+          case (serviceName, restore) =>
+            Monad[F].flatten[Unit](
+              journal
+                .fetchRawStates(serviceName)
+                .map(_.map(restore(_).map(_ => ()).recover[Throwable] { case _ => () }))
+                .map(Sequence[F].sequence(_).map(_ => ()))
+            )
+        }
+      )
+      .map(_ => ())
+
+  private[useless] def resumeInterruptedServicesUnsafe(): F[List[RetryResult]] =
     Sequence[F]
       .sequence(
         services.toList.map {
