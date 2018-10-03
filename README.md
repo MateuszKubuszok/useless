@@ -144,6 +144,7 @@ val manager: Manager[Future] = Manager[Future](journal)
 ```
 
 Both of these require an instance of `useless.algebra.MonadError[F, Throwable]`.
+Manager, additionally `useless.algebra.Timer`.
 Currently, only an instance for `Future` is defined, but there are extra modules
 for lifting Cats/Scalaz instances for it (see below). (I didn't use any of them
 here to make sure `useless-core` has literally no dependencies).
@@ -244,13 +245,17 @@ In this example we have a definition for `Int => Future[Unit]`, that would:
  * finally, it would try to print the `String`. Again it would try to do it as
    many times as needed to succeed.
 
-At this point there are 3 possible strategies to deal with an error:
+At this point there are 4 possible strategies to deal with an error:
 
  * always retry,
  * revert everything on first error,
- * decide which of 2 using `argument => Retry|Revert` function.
+ * revert bounded with max attempts and with exponentially increasing delay
+ * custom using `Input => F[(Input, Retry|Revert)]` function to decide
 
-In future, there should be more strategies to chose from.
+As a matter of the fact, bounded retry was implemented using custom strategy,
+while retry/revert are building blocks for more advanced strategies. Take
+a look at [`useless.extra.BoundedRetry`](modules/core/src/main/scala/useless/extra/BoundedRetry.scala)
+to check implementation details.
 
 ## Integrations
 
@@ -269,8 +274,9 @@ import cats.implicits._
 import useless.cats._
 ```
 
-It will allow you to convert `cats.MonadError` and `cats.Traverse` to
-`useless.algebra.MonadError` and `useless.algebra.Sequence`.
+It will allow you to convert `cats.MonadError`, `cats.Traverse`,
+`cats.effect.Timer` to `useless.algebra.MonadError`, `useless.algebra.Sequence`
+and `useless.algebra.Timer`.
 
 ### Scalaz
 
@@ -290,6 +296,7 @@ import useless.scalaz._
 
 It will allow you to convert `scalaz.MonadError` and `scalaz.Traverse` to
 `useless.algebra.MonadError` and `useless.algebra.Sequence`.
+`useless.algebra.Timer` exist for `scalaz.ioeffect.Task`.
 
 ### Circe
 
