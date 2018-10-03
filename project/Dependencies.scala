@@ -15,6 +15,7 @@ object Dependencies {
   val catsEffectVersion     = "1.0.0"
   val scalazIOEffectVersion = "2.10.1"
   val circeVersion          = "0.10.0"
+  val playJsonVersion       = "2.6.10"
   val specs2Version         = "4.3.4"
 
   // resolvers
@@ -29,6 +30,7 @@ object Dependencies {
   // serialization
   val circe              = "io.circe"                     %% "circe-core"                % circeVersion
   val circeParser        = "io.circe"                     %% "circe-parser"              % circeVersion
+  val playJson           = "com.typesafe.play"            %% "play-json"                 % playJsonVersion
   // testing
   val spec2Core          = "org.specs2"                   %% "specs2-core"               % specs2Version
   val spec2Scalacheck    = "org.specs2"                   %% "specs2-scalacheck"         % specs2Version

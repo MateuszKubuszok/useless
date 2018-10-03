@@ -314,3 +314,20 @@ import useless.circe._
 
 It will allow you to convert `io.circe.Decoder` and `io.circe.Encoder` to
 `useless.PersistentArgument`.
+
+### PlayJSON
+
+Add to `build.sbt`:
+
+```scala
+libraryDependencies += "com.kubuszok" %% "useless-play-json" % uselessVersion
+```
+
+then import:
+
+```scala
+import useless.playjson._
+```
+
+It will allow you to convert `play.api.libs.json.Reads` and
+`play.api.libs.json.Writes` to `useless.PersistentArgument`.
