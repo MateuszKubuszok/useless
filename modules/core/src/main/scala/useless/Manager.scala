@@ -57,6 +57,8 @@ object Manager {
 
   type RetryResult = Either[Throwable, Any]
 
+  @inline def apply[F[_]](implicit manager: Manager[F]): Manager[F] = manager
+
   def apply[F[_]: MonadThrowable: Sequence](journal: Journal[F]): Manager[F] =
     new Manager[F](journal, _ => ())
 
