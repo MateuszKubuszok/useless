@@ -4,13 +4,15 @@ import java.util.UUID
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
-import useless.algebras.{ MonadThrowable, Sequence }
+import useless.algebras.{ MonadThrowable, Sequence, Timer }
 import useless.algebras.syntax.AllSyntax
 import useless.Journal.{ ServiceState, StageStatus }
 
 abstract class ProcessManagerSpec extends Specification with AllSyntax {
 
-  abstract class WithManager[F[_]](implicit val monadThrowable: MonadThrowable[F], val traverse: Sequence[F])
+  abstract class WithManager[F[_]](implicit val monadThrowable: MonadThrowable[F],
+                                   val traverse:                Sequence[F],
+                                   val timer:                   Timer[F])
       extends Scope {
     val journal = createJournal[F]
     val manager = createManager[F](journal)
@@ -23,9 +25,9 @@ abstract class ProcessManagerSpec extends Specification with AllSyntax {
   }
 
   protected def createJournal[F[_]: MonadThrowable]: Journal[F] = InMemoryJournal[F]
-  protected def createManager[F[_]: MonadThrowable: Sequence](journal: Journal[F]): Manager[F] =
+  protected def createManager[F[_]: MonadThrowable: Sequence: Timer](journal: Journal[F]): Manager[F] =
     Manager[F](journal)
-  // Manager[F](journal, (s: String) => println(s))
+//    Manager[F](journal, (s: String) => println(s))
 
   protected def err(msg: String): Throwable = new Exception(msg)
 

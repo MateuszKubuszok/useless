@@ -1,1 +1,1 @@
-libraryDependencies += Dependencies.cats
+libraryDependencies += Dependencies.catsEffect

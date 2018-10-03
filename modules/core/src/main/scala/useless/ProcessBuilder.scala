@@ -2,6 +2,7 @@ package useless
 
 import useless.internal.{ RecoveryStrategy, Stage }
 import useless.ProcessBuilder.CustomStrategy
+import useless.algebras.{ MonadThrowable, Timer }
 
 sealed trait ProcessBuilder[F[_], I, O] {
 
@@ -65,6 +66,9 @@ object ProcessBuilder {
 
   trait CustomStrategy {
 
-    def apply[I: PersistentArgument](argument: I): OnError
+    def apply[F[_]: MonadThrowable: Timer, I: PersistentArgument](argument: I): F[(I, OnError)]
   }
+
+  implicit def withBoundedRetry[F[_], I, O](rpc: ReversibleProcessBuilder[F, I, O]): extra.BoundedRetryOps[F, I, O] =
+    new extra.BoundedRetryOps[F, I, O](rpc)
 }
