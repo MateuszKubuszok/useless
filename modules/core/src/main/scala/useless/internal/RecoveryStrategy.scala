@@ -1,9 +1,9 @@
 package useless.internal
 
 import useless.Journal.{ ServiceState, StageStatus }
-import useless.algebras.syntax._
 import useless.PersistentArgument
 import useless.ProcessBuilder.{ CustomStrategy, OnError }
+import useless.algebras.syntax._
 
 private[useless] sealed trait RecoveryStrategy {
 
@@ -38,10 +38,12 @@ private[useless] object RecoveryStrategy {
 
     def apply[F[_], I: PersistentArgument, O: PersistentArgument](originalState: ServiceState[I])(
       implicit context: ServiceContext[F]
-    ): F[StageError] =
-      byArgument(originalState.argument) match {
-        case OnError.Retry  => Retry[F, I, O](originalState)
-        case OnError.Revert => Revert[F, I, O](originalState)
+    ): F[StageError] = {
+      import context._
+      byArgument[F, I](originalState.argument).flatMap {
+        case (updatedArgument, OnError.Retry)  => Retry[F, I, O](originalState.updateArgument(updatedArgument))
+        case (updatedArgument, OnError.Revert) => Revert[F, I, O](originalState.updateArgument(updatedArgument))
       }
+    }
   }
 }

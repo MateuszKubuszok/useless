@@ -2,6 +2,8 @@ package useless.cats
 
 import cats.instances.list._
 
+import scala.concurrent.duration.FiniteDuration
+
 trait CatsIntegration {
 
   implicit def monadError[F[_], E](implicit me: cats.MonadError[F, E]): useless.algebras.MonadError[F, E] =
@@ -18,4 +20,7 @@ trait CatsIntegration {
 
       def sequence[A](lfa: List[F[A]]): F[List[A]] = cats.Traverse[List].sequence(lfa)
     }
+
+  implicit def timer[F[_]: cats.effect.Timer]: useless.algebras.Timer[F] =
+    (duration: FiniteDuration) => implicitly[cats.effect.Timer[F]].sleep(duration)
 }

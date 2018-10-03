@@ -42,6 +42,11 @@ class ManagedService[F[_], I, O](run: RunAST[F, I, O])(implicit context: Service
            """.stripMargin
         )
         findAndRunStage(currentStageNo + 1, next, Left(StageError(rawState, error)))
+      case (Left(StageError(rawState, error)), _) if rawState.status == Reverting && rawState.stageNo <= 0 =>
+        logger(s"""restoring dead state
+                  |  raw state : $rawState
+                """.stripMargin)
+        monadError.raiseError[O](error)
       case (Left(StageError(rawState, error)), RunAST.Proceed(current, next)) if rawState.status == Reverting =>
         logger(
           s"""found right stage, reverting
@@ -82,7 +87,7 @@ class ManagedService[F[_], I, O](run: RunAST[F, I, O])(implicit context: Service
           s"""running
              |  current stage no : $currentStageNo
              |  current run      : $currentRun
-             |  state : $state
+             |  state            : $state
            """.stripMargin
         )
         current.runStage(state).map(Right(_)).flatMap(findAndRunStage(currentStageNo + 1, next, _))

@@ -2,6 +2,8 @@ package useless.scalaz
 
 import scalaz.std.list._
 
+import scala.concurrent.duration.FiniteDuration
+
 trait ScalazIntegration {
 
   implicit def monadError[F[_], E](implicit me: scalaz.MonadError[F, E]): useless.algebras.MonadError[F, E] =
@@ -21,4 +23,7 @@ trait ScalazIntegration {
 
       def sequence[A](lfa: List[F[A]]): F[List[A]] = scalaz.Traverse[List].sequence(lfa)
     }
+
+  implicit val taskTimer: useless.algebras.Timer[scalaz.ioeffect.Task] =
+    (duration: FiniteDuration) => scalaz.ioeffect.Task.sleep(duration)
 }

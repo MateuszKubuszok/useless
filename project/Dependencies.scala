@@ -12,10 +12,10 @@ object Dependencies {
   val scalaFmtVersion = "1.5.1"
 
   // libraries versions
-  val catsVersion     = "1.3.1"
-  val circeVersion    = "0.10.0"
-  val scalazVersion   = "7.2.26"
-  val specs2Version   = "4.3.4"
+  val catsEffectVersion     = "1.0.0"
+  val scalazIOEffectVersion = "2.10.1"
+  val circeVersion          = "0.10.0"
+  val specs2Version         = "4.3.4"
 
   // resolvers
   val resolvers = Seq(
@@ -24,8 +24,8 @@ object Dependencies {
   )
 
   // functional libraries
-  val cats               = "org.typelevel"                %% "cats-core"                 % catsVersion
-  val scalaz             = "org.scalaz"                   %% "scalaz-core"               % scalazVersion
+  val catsEffect         = "org.typelevel"                %% "cats-effect"               % catsEffectVersion
+  val scalazIOEffect     = "org.scalaz"                   %% "scalaz-ioeffect"           % scalazIOEffectVersion
   // serialization
   val circe              = "io.circe"                     %% "circe-core"                % circeVersion
   val circeParser        = "io.circe"                     %% "circe-parser"              % circeVersion

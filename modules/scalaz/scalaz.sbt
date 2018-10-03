@@ -1,1 +1,1 @@
-libraryDependencies += Dependencies.scalaz
+libraryDependencies += Dependencies.scalazIOEffect
