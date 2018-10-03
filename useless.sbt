@@ -6,7 +6,7 @@ lazy val root = project.root
   .setDescription("Build of a simple process manager library")
   .configureRoot
   .noPublish
-  .aggregate(core, cats, circe, scalaz)
+  .aggregate(core, cats, circe, playJson, scalaz)
 
 lazy val core = project.from("core")
   .setName("useless-core")
@@ -33,6 +33,14 @@ lazy val circe = project.from("circe")
   .setName("useless-circe")
   .setDescription("Circe integration for useless")
   .setInitialImport("useless.circe._")
+  .configureModule
+  .publish
+  .dependsOn(core)
+
+lazy val playJson = project.from("play-json")
+  .setName("useless-play-json")
+  .setDescription("Play JSON integration for useless")
+  .setInitialImport("useless.playjson._")
   .configureModule
   .publish
   .dependsOn(core)
