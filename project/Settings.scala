@@ -5,9 +5,7 @@ import sbt.Tests.Argument
 import com.typesafe.sbt._
 import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 import org.scalastyle.sbt.ScalastylePlugin.autoImport._
-import sbtassembly.AssemblyPlugin.autoImport._
 import scoverage._
-import spray.revolver.RevolverPlugin.autoImport._
 import wartremover._
 
 object Settings extends Dependencies {
@@ -19,6 +17,7 @@ object Settings extends Dependencies {
 
     scalaOrganization := scalaOrganizationUsed,
     scalaVersion      := scalaVersionUsed,
+    crossScalaVersions := crossScalaVersionsUsed,
 
     scalafmtVersion := scalaFmtVersionUsed
   )
@@ -40,12 +39,10 @@ object Settings extends Dependencies {
       "-language:implicitConversions",
       "-language:postfixOps",
       // private options
-      // "-Yinduction-heuristics", // Typelevel Scala only
+      "-Xexperimental",
+      "-Ybackend-parallelism", "8",
       "-Yno-adapted-args",
       "-Ypartial-unification",
-      // "-Ysysdef", "com.kubuszok.Predef._", // Typelevel Scala only
-      // "-Ypredef", "_", // Typelevel Scala only
-      "-Ybackend-parallelism", "8",
       // warnings
       "-Ywarn-dead-code",
       "-Ywarn-extra-implicit",
@@ -56,9 +53,6 @@ object Settings extends Dependencies {
       "-Ywarn-nullary-unit",
       "-Ywarn-numeric-widen",
       "-Ywarn-unused:implicits",
-      "-Ywarn-unused:imports",
-      "-Ywarn-unused:locals",
-      "-Ywarn-unused:params",
       "-Ywarn-unused:patvars",
       "-Ywarn-unused:privates",
       "-Ywarn-value-discard",
@@ -66,9 +60,7 @@ object Settings extends Dependencies {
       "-Xcheckinit",
       "-Xfatal-warnings",
       "-Xfuture",
-      // "-Xstrict-patmat-analysis", // Typelevel Scala only
       // linting
-      "-Xlint",
       "-Xlint:adapted-args",
       "-Xlint:by-name-right-associative",
       "-Xlint:constant",
@@ -84,9 +76,28 @@ object Settings extends Dependencies {
       "-Xlint:poly-implicit-overload",
       "-Xlint:private-shadow",
       "-Xlint:stars-align",
-      // "-Xlint:strict-unsealed-patmat", // Typelevel Scala only
       "-Xlint:type-parameter-shadow",
       "-Xlint:unsound-match"
+    ).filterNot(
+      (if (scalaVersion.value.startsWith("2.13")) Set(
+        // removed in 2.13.x
+        "-Yno-adapted-args",
+        "-Ypartial-unification",
+        // only for 2.11.x
+        "-Xexperimental"
+      ) else if (scalaVersion.value.startsWith("2.12")) Set(
+        // only for 2.11.x
+        "-Xexperimental"
+      ) else if (scalaVersion.value.startsWith("2.11")) Set(
+        // added in 2.12.x
+        "-Ybackend-parallelism", "8",
+        "-Ywarn-extra-implicit",
+        "-Ywarn-macros:after",
+        "-Ywarn-unused:implicits",
+        "-Ywarn-unused:patvars",
+        "-Ywarn-unused:privates",
+        "-Xlint:constant"
+      ) else Set.empty[String]).contains _
     ),
     Compile / console / scalacOptions --= Seq(
       // warnings

@@ -2,6 +2,7 @@ package useless.algebras
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scala.concurrent.Future._
 
 trait Timer[F[_]] {
 
@@ -14,5 +15,5 @@ object Timer {
 
   implicit def futureTimer(implicit ec: ExecutionContext): Timer[Future] =
     (duration: FiniteDuration) =>
-      Future.unit.flatMap(_ => blocking(Await.result(Future.never, duration))).recoverWith { case _ => Future.unit }
+      successful(()).flatMap(_ => blocking(Await.result(never, duration))).recoverWith { case _ => successful(()) }
 }
