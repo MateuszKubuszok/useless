@@ -5,8 +5,9 @@ import Dependencies._
 object Dependencies {
 
   // scala version
-  val scalaOrganization = "org.scala-lang" // "org.typelevel"
-  val scalaVersion      = "2.12.7" // "2.12.4-bin-typelevel-4"
+  val scalaOrganization  = "org.scala-lang" // "org.typelevel"
+  val scalaVersion       = "2.12.7" // "2.12.4-bin-typelevel-4"
+  val crossScalaVersions = Seq("2.11.12", "2.12.7", "2.13.0-M4")
 
   // build tools version
   val scalaFmtVersion = "1.5.1"
@@ -40,6 +41,7 @@ trait Dependencies {
 
   val scalaOrganizationUsed = scalaOrganization
   val scalaVersionUsed = scalaVersion
+  val crossScalaVersionsUsed = crossScalaVersions
 
   val scalaFmtVersionUsed = scalaFmtVersion
 
