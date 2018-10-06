@@ -298,6 +298,66 @@ It will allow you to convert `scalaz.MonadError` and `scalaz.Traverse` to
 `useless.algebra.MonadError` and `useless.algebra.Sequence`.
 `useless.algebra.Timer` exist for `scalaz.ioeffect.Task`.
 
+### Doobie
+
+Add to `build.sbt`:
+
+```scala
+libraryDependencies += "com.kubuszok" %% "useless-doobie" % uselessVersion
+```
+
+then import:
+
+```scala
+import useless.doobie._
+```
+
+It will allow you to convert create `Journal` with
+`new DoobieJournal(transactor)`. You can configure it using
+`DoobieJournal.Config`, as by default it expects table similar to:
+
+```sql
+CREATE TABLE journal (
+  service_name Text NOT NULL,
+  call_id      Text NOT NULL,
+  stage_no     Int  NOT NULL,
+  argument     Text NOT NULL,
+  status       Text NOT NULL,
+
+  UNIQUE (service_name, call_id)
+);
+```
+
+### Slick
+
+Add to `build.sbt`:
+
+```scala
+libraryDependencies += "com.kubuszok" %% "useless-slick" % uselessVersion
+```
+
+then import:
+
+```scala
+import useless.slick._
+```
+
+It will allow you to convert create `Journal` with
+`new SlickJournal(database)`. You can configure it using
+`SlickJournal.Config`, as by default it expects table similar to:
+
+```sql
+CREATE TABLE journal (
+  service_name Text NOT NULL,
+  call_id      Text NOT NULL,
+  stage_no     Int  NOT NULL,
+  argument     Text NOT NULL,
+  status       Text NOT NULL,
+
+  UNIQUE (service_name, call_id)
+);
+```
+
 ### Circe
 
 Add to `build.sbt`:
