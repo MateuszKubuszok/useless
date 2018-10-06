@@ -3,7 +3,6 @@ package useless.doobie
 import java.util.UUID
 
 import cats._
-import cats.effect._
 import cats.implicits._
 import doobie._
 import doobie.implicits._
