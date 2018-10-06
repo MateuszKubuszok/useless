@@ -13,6 +13,8 @@ object Dependencies {
   val scalaFmtVersion = "1.5.1"
 
   // libraries versions
+  val doobieVersion         = "0.6.0-M3"
+  val slickVersion          = "3.2.3"
   val catsEffectVersion     = "1.0.0"
   val scalazIOEffectVersion = "2.10.1"
   val circeVersion          = "0.10.0"
@@ -25,6 +27,9 @@ object Dependencies {
     Resolver typesafeRepo "releases"
   )
 
+  // database
+  val doobie             = "org.tpolecat"                 %% "doobie-core"               % doobieVersion
+  val slick              = "com.typesafe.slick"           %% "slick"                     % slickVersion
   // functional libraries
   val catsEffect         = "org.typelevel"                %% "cats-effect"               % catsEffectVersion
   val scalazIOEffect     = "org.scalaz"                   %% "scalaz-ioeffect"           % scalazIOEffectVersion
