@@ -6,6 +6,12 @@ import scala.concurrent.duration.FiniteDuration
 
 trait CatsIntegration {
 
+  implicit def functionK[F[_], G[_]](implicit fK: cats.arrow.FunctionK[F, G]): useless.algebras.FunctionK[F, G] =
+    new useless.algebras.FunctionK[F, G] {
+
+      def apply[A](fa: F[A]): G[A] = fK[A](fa)
+    }
+
   implicit def monadError[F[_], E](implicit me: cats.MonadError[F, E]): useless.algebras.MonadError[F, E] =
     new useless.algebras.MonadError[F, E] {
 

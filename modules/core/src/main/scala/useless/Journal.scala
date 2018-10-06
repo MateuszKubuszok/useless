@@ -3,6 +3,7 @@ package useless
 import java.util.UUID
 
 import useless.Journal._
+import useless.algebras.FunctionK
 import useless.internal.StageError
 
 trait Journal[F[_]] {
@@ -12,6 +13,8 @@ trait Journal[F[_]] {
   def persistRawState(state:      RawServiceState): F[Unit]
   def fetchRawStates(serviceName: String):          F[List[RawServiceState]]
   def removeRawStates(callIDs:    List[UUID]):      F[Unit]
+
+  def mapK[G[_]](fK: FunctionK[F, G]): Journal[G] = new Journal.MappedJournal(this, fK)
 }
 
 object Journal {
@@ -63,5 +66,12 @@ object Journal {
 
     val values: Set[StageStatus] = Set(Started, Finished, Failed, Reverting, IllegalState)
     def findByName(name: String): StageStatus = values.find(_.name equalsIgnoreCase name).getOrElse(IllegalState)
+  }
+
+  class MappedJournal[F[_], G[_]](journal: Journal[F], fK: FunctionK[F, G]) extends Journal[G] {
+
+    def persistRawState(state:      RawServiceState): G[Unit]                  = fK(journal.persistRawState(state))
+    def fetchRawStates(serviceName: String):          G[List[RawServiceState]] = fK(journal.fetchRawStates(serviceName))
+    def removeRawStates(callIDs:    List[UUID]):      G[Unit]                  = fK(journal.removeRawStates(callIDs))
   }
 }

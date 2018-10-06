@@ -17,7 +17,6 @@ class SlickJournal(database: BasicBackend#Database,
     extends Journal[Future] {
 
   import config._
-//  import profile._
   import profile.api._
 
   implicit val stageStatusType: JdbcType[StageStatus] with BaseTypedType[StageStatus] =
