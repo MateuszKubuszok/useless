@@ -6,7 +6,7 @@ lazy val root = project.root
   .setDescription("Build of a simple process manager library")
   .configureRoot
   .noPublish
-  .aggregate(core, cats, circe, doobie, playJson, scalaz, slick)
+  .aggregate(core, cats, circe, doobie, playJson, scalaz, slick, example)
 
 lazy val core = project.from("core")
   .setName("useless-core")
@@ -68,6 +68,14 @@ lazy val slick = project.from("slick")
   .configureModule
   .publish
   .dependsOn(core)
+
+lazy val example = (project in file("example"))
+  .setName("useless-example")
+  .setDescription("useless example")
+  .setInitialImport("useless.example._")
+  .configureModule
+  .noPublish
+  .dependsOn(core, cats, circe, doobie, playJson, scalaz, slick)
 
 addCommandAlias("fullTest", ";test;scalastyle")
 addCommandAlias("fullCoverageTest", ";coverage;test;coverageReport;coverageAggregate;scalastyle")
