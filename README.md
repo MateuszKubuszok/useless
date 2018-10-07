@@ -132,6 +132,10 @@ You will setup things in following order:
  * once services are defined you can run `manager.resumeInterruptedServices()`
    to make it use journal to resume all interrupted services.
 
+See [example](example/src) to see how it can be used in a real app.
+Especially [`AdminServices`](example/src/main/scala/useless/example/AdminServices.scala)
+and [`Example`](example/src/main/scala/useless/example/Example.scala).
+
 ### Journal and Manager
 
 At first, define a `journal` and `manager`:
