@@ -75,6 +75,7 @@ lazy val example = (project in file("example"))
   .setInitialImport("useless.example._")
   .configureModule
   .noPublish
+  .settings(mainClass := Some("useless.example.Example"))
   .dependsOn(core, cats, circe, doobie, playJson, scalaz, slick)
 
 addCommandAlias("fullTest", ";test;scalastyle")

@@ -6,13 +6,13 @@ import scala.concurrent.duration.FiniteDuration
 
 trait ScalazIntegration {
 
-  implicit def functionK[F[_], G[_]](implicit fK: scalaz.~>[F, G]): useless.algebras.FunctionK[F, G] =
+  implicit def makeFunctionKScalaz[F[_], G[_]](implicit fK: scalaz.~>[F, G]): useless.algebras.FunctionK[F, G] =
     new useless.algebras.FunctionK[F, G] {
 
       def apply[A](fa: F[A]): G[A] = fK[A](fa)
     }
 
-  implicit def monadError[F[_], E](implicit me: scalaz.MonadError[F, E]): useless.algebras.MonadError[F, E] =
+  implicit def makeMonadErrorScalaz[F[_], E](implicit me: scalaz.MonadError[F, E]): useless.algebras.MonadError[F, E] =
     new useless.algebras.MonadError[F, E] {
 
       def pure[A](value:       A): F[A] = me.pure(value)
@@ -24,12 +24,12 @@ trait ScalazIntegration {
         }
     }
 
-  implicit def sequence[F[_]: scalaz.Applicative]: useless.algebras.Sequence[F] =
+  implicit def makeSequenceScalaz[F[_]: scalaz.Applicative]: useless.algebras.Sequence[F] =
     new useless.algebras.Sequence[F] {
 
       def sequence[A](lfa: List[F[A]]): F[List[A]] = scalaz.Traverse[List].sequence(lfa)
     }
 
-  implicit val taskTimer: useless.algebras.Timer[scalaz.ioeffect.Task] =
+  implicit val timerScalaz: useless.algebras.Timer[scalaz.ioeffect.Task] =
     (duration: FiniteDuration) => scalaz.ioeffect.Task.sleep(duration)
 }

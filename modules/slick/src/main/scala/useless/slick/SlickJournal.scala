@@ -24,42 +24,45 @@ class SlickJournal(database: BasicBackend#Database,
 
   private class JournalEntries(tag: Tag) extends Table[RawServiceState](tag, tableName) {
 
-    val serviceName: Rep[String]      = column[String](serviceNameColumn)
-    val callID:      Rep[UUID]        = column[UUID](callIDColumn)
-    val stageNo:     Rep[Int]         = column[Int](stageNoColumn)
-    val argument:    Rep[String]      = column[String](argumentColumn)
-    val statusName:  Rep[StageStatus] = column[StageStatus](statusColumn)
+    val serviceName: Rep[String]      = column[String](serviceNameCol)
+    val callID:      Rep[String]      = column[String](callIDCol, O.PrimaryKey)
+    val stageNo:     Rep[Int]         = column[Int](stageNoCol)
+    val argument:    Rep[String]      = column[String](argumentCol)
+    val statusName:  Rep[StageStatus] = column[StageStatus](statusCol)
+
+    private val tupled: ((String, String, Int, String, StageStatus)) => RawServiceState = {
+      case (serviceName: String, callID: String, stageNo: Int, argument: String, statusName: StageStatus) =>
+        Journal.RawServiceState(serviceName, UUID.fromString(callID), stageNo, argument, statusName)
+    }
+    private val unapply: RawServiceState => Option[(String, String, Int, String, StageStatus)] = {
+      case Journal.RawServiceState(serviceName, callID, stageNo, argument, status) =>
+        Some((serviceName, callID.toString, stageNo, argument, status))
+    }
 
     def * : ProvenShape[RawServiceState] = // scalastyle:ignore
-      (
-        serviceName,
-        callID,
-        stageNo,
-        argument,
-        statusName
-      ) <> (Journal.RawServiceState.tupled, Journal.RawServiceState.unapply _)
+      (serviceName, callID, stageNo, argument, statusName) <> (tupled, unapply)
   }
 
   private val journal = TableQuery[JournalEntries](new JournalEntries(_))
 
   def persistRawState(state: Journal.RawServiceState): Future[Unit] =
-    database.run(journal += state).map(_ => ())
+    database.run(journal insertOrUpdate state).map(_ => ())
 
   def fetchRawStates(serviceName: String): Future[List[Journal.RawServiceState]] =
     database.run(journal.filter(_.serviceName === serviceName).to[List].result)
 
   def removeRawStates(callIDs: List[UUID]): Future[Unit] =
-    database.run(journal.filter(_.callID inSet callIDs).delete.map(_ => ()))
+    database.run(journal.filter(_.callID inSet callIDs.map(_.toString)).delete.map(_ => ()))
 }
 
 object SlickJournal {
 
   final case class Config(
-    tableName:         String = "journal",
-    serviceNameColumn: String = "service_name",
-    callIDColumn:      String = "call_id",
-    stageNoColumn:     String = "stage_no",
-    argumentColumn:    String = "argument",
-    statusColumn:      String = "status"
+    tableName:      String = "journal",
+    serviceNameCol: String = "service_name",
+    callIDCol:      String = "call_id",
+    stageNoCol:     String = "stage_no",
+    argumentCol:    String = "argument",
+    statusCol:      String = "status"
   )
 }

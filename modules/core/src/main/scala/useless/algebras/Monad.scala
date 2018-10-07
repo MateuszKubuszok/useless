@@ -1,4 +1,5 @@
 package useless.algebras
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait Monad[F[_]] {
 
@@ -16,4 +17,7 @@ trait Monad[F[_]] {
 object Monad {
 
   @inline def apply[F[_]](implicit monad: Monad[F]): Monad[F] = monad
+
+  implicit def futureMonadError(implicit ec: ExecutionContext): Monad[Future] =
+    MonadError.futureMonadError
 }
