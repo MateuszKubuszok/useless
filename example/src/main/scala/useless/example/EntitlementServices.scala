@@ -44,7 +44,7 @@ class DoobieEntitlementServices[F[_]: MonadError[?[_], Throwable]](transactor: T
   def fetchEntitlementForUser(userID: UUID): F[Set[Entitlement]] = {
     logger.info(s"Fetching entitlements for user: $userID")
     fr"""SELECT resource_id, level
-         FROM users
+         FROM entitlements
          WHERE user_id = $userID"""
       .query[(UUID, String)]
       .map {

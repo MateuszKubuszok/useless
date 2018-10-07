@@ -9,7 +9,7 @@ import org.flywaydb.core.Flyway
 import slick.basic.{ BasicBackend, DatabaseConfig }
 import useless._
 import useless.algebras.MonadError
-import useless.cats._
+import useless.cats._ // allows turning cats.MonadError into useless.algebra.MonadError
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ Await, Future }
@@ -19,6 +19,7 @@ object Example {
 
   private val logger = Logger(getClass)
 
+  // required by Doobie
   implicit val catsContextShift: ContextShift[IO] = IO.contextShift(global)
   implicit val catsTimer:        Timer[IO]        = IO.timer(global)
   lazy val transactor = Transactor.fromDriverManager[IO](
@@ -27,13 +28,19 @@ object Example {
     sys.env("PGUSER"),
     sys.env("PGPASSWORD")
   )
-  lazy val doobieJournal: Journal[IO] =
-    new useless.doobie.DoobieJournal[IO](transactor)
+
+  // Journal implemented using Doobie components
+  lazy val doobieJournal: Journal[IO] = new useless.doobie.DoobieJournal[IO](transactor)
+  // Services implemented using Doobie components
   implicit lazy val doobieEntitlementServices: EntitlementServices[IO] = new DoobieEntitlementServices[IO](transactor)
   implicit lazy val doobieUserServices:        UserServices[IO]        = new DoobieUserServices[IO](transactor)
 
+  // required by Slick
   lazy val slickDatabase: BasicBackend#Database = DatabaseConfig.forConfig[SlickProfile]("database").db
-  lazy val slickJournal:  Journal[Future]       = new useless.slick.SlickJournal(slickDatabase, SlickProfile)
+
+  // Journal implemented using Slick components
+  lazy val slickJournal: Journal[Future] = new useless.slick.SlickJournal(slickDatabase, SlickProfile)
+  // Services implemented using Slick components
   implicit lazy val slickEntitlementServices: EntitlementServices[Future] =
     new SlickEntitlementServices(slickDatabase, SlickProfile)
   implicit lazy val slickUserServices: UserServices[Future] = new SlickUserServices(slickDatabase, SlickProfile)
