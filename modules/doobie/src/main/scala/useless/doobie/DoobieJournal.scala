@@ -3,9 +3,11 @@ package useless.doobie
 import java.util.UUID
 
 import cats._
+import cats.data.NonEmptyList
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+import doobie.util.fragment.Fragment.const
 import useless.Journal
 import useless.Journal._
 
@@ -17,26 +19,32 @@ class DoobieJournal[F[_]: Monad](transactor: Transactor[F], config: DoobieJourna
   def persistRawState(state: Journal.RawServiceState): F[Unit] = {
     import state._
     (for {
-      exists <- fr"""SELECT $callIDColumn
-                     FROM $tableName
-                     WHERE $serviceNameColumn = $serviceName
-                     AND $callIDColumn = ${callID.toString}""".query[String].option.map(_.isDefined)
+      exists <- (fr"SELECT" ++ const(callIDCol) ++
+        fr"FROM" ++ const(tableName) ++
+        fr"WHERE" ++ const(callIDCol) ++ fr" = ${callID.toString}").query[String].option.map(_.isDefined)
       _ <- if (exists) {
-        fr"""UPDATE $tableName
-             SET $stageNoColumn = $stageNo, $argumentColumn = $argument, $statusColumn = ${status.name}
-             WHERE $serviceNameColumn = $serviceName
-             AND $callIDColumn = ${callID.toString}""".update.run
+        (fr"UPDATE" ++ const(tableName) ++
+          fr"SET" ++ const(stageNoCol) ++ fr"= $stageNo," ++
+          const(argumentCol) ++ fr" = $argument," ++
+          const(statusCol) ++ fr" = ${status.name}" ++
+          fr"WHERE" ++ const(serviceNameCol) ++ fr" = $serviceName" ++
+          fr"AND" ++ const(callIDCol) ++ fr"= ${callID.toString}").update.run
       } else {
-        fr"""INSERT INTO $tableName ($serviceNameColumn, $callIDColumn, $stageNoColumn, $argumentColumn, $statusColumn)
-             VALUES ($serviceName, ${callID.toString}, $stageNo, $argument, ${status.name})""".update.run
+        (fr"INSERT INTO" ++ const(tableName) ++
+          fr"(" ++ const(serviceNameCol) ++ fr"," ++ const(callIDCol) ++ fr"," ++ const(stageNoCol) ++ fr"," ++
+          const(argumentCol) ++ fr"," ++ const(statusCol) ++
+          fr")" ++
+          fr"VALUES ($serviceName, ${callID.toString}, $stageNo, $argument, ${status.name})").update.run
       }
     } yield ()).transact(transactor)
   }
 
   def fetchRawStates(serviceName: String): F[List[Journal.RawServiceState]] =
-    fr"""SELECT $callIDColumn, $stageNoColumn, $argumentColumn, $statusColumn
-         FROM $tableName
-         WHERE $serviceNameColumn = $serviceName"""
+    (fr"SELECT" ++ const(callIDCol) ++ fr"," ++ const(stageNoCol) ++ fr"," ++ const(argumentCol) ++ fr"," ++ const(
+      statusCol
+    ) ++
+      fr"FROM" ++ const(tableName) ++
+      fr"WHERE" ++ const(serviceNameCol) ++ fr" = $serviceName")
       .query[(String, Int, String, String)]
       .to[List]
       .transact(transactor)
@@ -47,20 +55,23 @@ class DoobieJournal[F[_]: Monad](transactor: Transactor[F], config: DoobieJourna
         }
       )
 
-  def removeRawStates(callIDs: List[UUID]): F[Unit] =
-    fr"""DELETE FROM $tableName WHERE $callIDColumn in (${callIDs.mkString(",")})""".update.run
-      .transact(transactor)
-      .map(_ => ())
+  def removeRawStates(callIDs: List[UUID]): F[Unit] = {
+    val head :: tail = callIDs
+    (fr"DELETE FROM" ++ const(tableName) ++ fr"WHERE" ++ Fragments.in(
+      Fragment.const(callIDCol),
+      NonEmptyList(head, tail).map(_.toString)
+    )).update.run.transact(transactor).map(_ => ())
+  }
 }
 
 object DoobieJournal {
 
   final case class Config(
-    tableName:         String = "journal",
-    serviceNameColumn: String = "service_name",
-    callIDColumn:      String = "call_id",
-    stageNoColumn:     String = "stage_no",
-    argumentColumn:    String = "argument",
-    statusColumn:      String = "status"
+    tableName:      String = "journal",
+    serviceNameCol: String = "service_name",
+    callIDCol:      String = "call_id",
+    stageNoCol:     String = "stage_no",
+    argumentCol:    String = "argument",
+    statusCol:      String = "status"
   )
 }
