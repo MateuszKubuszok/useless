@@ -323,12 +323,10 @@ It will allow you to convert create `Journal` with
 ```sql
 CREATE TABLE journal (
   service_name Text NOT NULL,
-  call_id      Text NOT NULL,
+  call_id      Text NOT NULL PRIMARY KEY,
   stage_no     Int  NOT NULL,
   argument     Text NOT NULL,
-  status       Text NOT NULL,
-
-  UNIQUE (service_name, call_id)
+  status       Text NOT NULL
 );
 ```
 
@@ -353,12 +351,10 @@ It will allow you to convert create `Journal` with
 ```sql
 CREATE TABLE journal (
   service_name Text NOT NULL,
-  call_id      Text NOT NULL,
+  call_id      Text NOT NULL PRIMARY KEY,
   stage_no     Int  NOT NULL,
   argument     Text NOT NULL,
-  status       Text NOT NULL,
-
-  UNIQUE (service_name, call_id)
+  status       Text NOT NULL
 );
 ```
 
